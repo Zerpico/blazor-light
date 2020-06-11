@@ -1,0 +1,66 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>blazor_light_app</RootNamespace>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <WWWFiles Include="../BlazorServer/wwwroot/**/*.*" />
+    <WinFiles Include="../lib/win/**/*.*" />
+    <LinFiles Include="../lib/lin/**/*.*" />
+    <MacFiles Include="../lib/mac/**/*.*" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlazorServer\BlazorServer.csproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Update="wwwroot\app.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+
+
+  <!-- OS Detection default Value  -->
+  <PropertyGroup>
+    <IsWindows>False</IsWindows>
+    <IsOSX>False</IsOSX>
+    <IsLinux>False</IsLinux>
+  </PropertyGroup>
+
+  <!-- Check if we target Windows -->
+  <PropertyGroup Condition="($(RuntimeIdentifier.StartsWith('win')) And !$(RuntimeIdentifier.Equals('')) ) Or ( $(OS.Equals('Windows_NT')) And $(RuntimeIdentifier.Equals('')) ) ">
+    <!--Replacing '-' and '.' by '_' in Constants because we cannot use those characters in the source files -->
+    <DefineConstants>_WINDOWS_, $(RuntimeIdentifier.Replace("-","_").Replace(".","_"))</DefineConstants>
+    <IsWindows>True</IsWindows>
+  </PropertyGroup>
+
+  <!-- Check if we target OSX -->
+  <PropertyGroup Condition="($(RuntimeIdentifier.StartsWith('osx')) And !$(RuntimeIdentifier.Equals('')) ) Or ( $([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX))) And $(RuntimeIdentifier.Equals('')) ) ">
+    <!--Replacing '-' and '.' by '_' in Constants because we cannot use those characters in the source files -->
+    <DefineConstants>_OSX_, $(RuntimeIdentifier.Replace("-","_").Replace(".","_"))</DefineConstants>
+    <IsOSX>True</IsOSX>
+  </PropertyGroup>
+
+  <!-- Check if we target Linux (To many name to check, instead we check if not one of the other OS) -->
+  <PropertyGroup Condition=" !$(IsWindows) And !$(IsOSX)">
+    <!--Replacing '-' and '.' by '_' in Constants because we cannot use those characters in the source files -->
+    <DefineConstants>_LINUX_, $(RuntimeIdentifier.Replace("-","_").Replace(".","_"))</DefineConstants>
+    <IsLinux>True</IsLinux>
+  </PropertyGroup>
+
+  <Target Name="PostBuild" AfterTargets="AfterBuild">
+    <Copy SourceFiles="@(WWWFiles)" DestinationFiles="@(WWWFiles->'$(TargetDir)\wwwroot\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(WinFiles)" Condition="$(IsWindows)" DestinationFiles="@(WinFiles->'$(TargetDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(LinFiles)" Condition="$(IsLinux)" DestinationFiles="@(LinFiles->'$(TargetDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(MacFiles)" Condition="$(IsOSX)" DestinationFiles="@(MacFiles->'$(TargetDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+
+</Project>
